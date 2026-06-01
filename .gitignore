@@ -1,0 +1,135 @@
+# ==================================================
+# Project: RISC-V GPU on Gowin Tang Primer 20K
+# Scope: Ignores build artifacts, toolchain outputs,
+#        simulator files, and IDE-specific settings.
+# ==================================================
+
+# ------------------------------
+# 1. FPGA & Gowin EDA Build Artifacts
+# ------------------------------
+# Gowin project and implementation directories
+impl/
+impl_1/
+*.runs
+*.cache
+*.data
+*.log
+*.jou
+*.pb
+
+# Gowin specific output files
+*.fs       # Bitstream file
+*.bit      # Bitstream file (alternative)
+*.bin      # Binary configuration file
+*.mcs      # MCS PROM file
+
+# Gowin IP core generation and logs
+ipcore/
+*.ipuser
+*.log
+*.sdf
+*.vo       # Verilog simulation output
+*.vho      
+
+# Temporary files
+*.tmp
+*.bak
+*~
+
+# Gowin IDE settings (absolute paths often stored here)
+.gowin
+.settings/
+
+# ------------------------------
+# 2. RISC-V Software (Toolchain & Application)
+# ------------------------------
+# Compiled object files
+*.o
+*.obj
+*.a
+*.so
+*.dll
+*.exe
+
+# Executable and linked files
+*.elf      # Executable and Linkable Format
+*.hex      # Intel Hex format
+*.bin      # Raw binary
+*.srec     # S-Record format
+
+# Build directories for RISC-V projects
+build/
+bin/
+Debug/
+Release/
+out/
+target/
+
+# RISC-V specific generated files
+*.map      # Linker map file
+*.sym      # Symbol files
+
+# ------------------------------
+# 3. Simulation Outputs
+# ------------------------------
+# Waveform files
+*.vcd
+*.fst
+*.vpd
+*.fsdb
+*.wlf
+
+# Simulation logs and databases
+*.log
+*.db
+*.wdb
+*.trn
+
+# ------------------------------
+# 4. Toolchain & Environment
+# ------------------------------
+# RISC-V GNU Toolchain build directory (if compiling from source)
+riscv-gnu-toolchain/
+build-*/
+
+# Gowin EDA wrapper toolchain (from documentation, often contains absolute paths [citation:1])
+.gowin
+
+# ------------------------------
+# 5. OS & Editor Artifacts
+# ------------------------------
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Linux
+*~
+
+# VSCode (unless you want to share settings)
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+
+# ------------------------------
+# 6. Documentation & Misc
+# ------------------------------
+# Generated PDFs or reports (keep source .docx/.md, ignore exports)
+*.pdf
+*.log (for LaTeX builds)
+
+# Local archives
+*.zip
+*.tar
+*.gz
+*.7z
