@@ -12,7 +12,19 @@
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  See the License for the specific language governing permissions and     
  limitations under the License.                                          
- */                                                                      
+ */    
+
+// =========================================================
+// MODIFICATIONS FOR HDMI INTEGRATION
+//
+// 1. Port declaration (lines 333-340): added V_sync, H_sync, and 
+//    hdmi_data_out as output ports to expose HDMI signals
+//    at this level of the SoC hierarchy.
+//
+// 2. e203_subsys_top instantiation (lines 357-360): connected V_sync, 
+//    H_sync, and hdmi_data_out to the corresponding ports
+//    of the e203_subsys_top instance below.
+// =========================================================                                                                  
                                                                          
                                                                          
                                                                          
@@ -316,7 +328,16 @@ module e203_soc_top(
 
       // PMU output is just output without enable
   output io_pads_aon_pmu_padrst_o_oval,
-  output io_pads_aon_pmu_vddpaden_o_oval 
+  output io_pads_aon_pmu_vddpaden_o_oval, 
+
+  // =========================================================
+  // HDMI Output Signals
+  // Added to propagate video timing and pixel data generated
+  // by the HDMI peripheral up through the SoC hierarchy.
+  // =========================================================
+  output          V_sync,
+  output          H_sync,
+  output  [23:0]  hdmi_data_out
 );
 
 
@@ -332,6 +353,11 @@ module e203_soc_top(
 
  e203_subsys_top u_e203_subsys_top(
     .core_mhartid      (1'b0),
+
+    // HDMI signal connections - propagated from lower hierarchy
+    .V_sync        (V_sync),
+    .H_sync        (H_sync),
+    .hdmi_data_out (hdmi_data_out),
   
 
 

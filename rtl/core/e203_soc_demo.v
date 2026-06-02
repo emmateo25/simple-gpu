@@ -1,13 +1,25 @@
+// =========================================================
+// MODIFICATIONS FOR HDMI INTEGRATION
+// 
+// 1. Port declaration (lines 43-52):
+//    Added V_sync, H_sync, and hdmi_data_out as output ports
+//    to expose HDMI signals at the top level of the hierarchy.
+//
+// 2. e203_soc_top instantiation (lines 76-80):
+//    Connected V_sync, H_sync, and hdmi_data_out to the
+//    corresponding ports of the e203_soc_top instance below.
+// =========================================================
 module e203_soc_demo (
     input          clk_in, //50MHz clock input 
 
-    input          tck, // The JTAG TCK is input, need to be pull-up
+    //tck=test clock, tms=test mode select, tdi=test data in, tdo=test data out
+    input          tck, // The JTAG TCK is input, need to be pull-up 
     input          tms, // The JTAG TMS is input, need to be pull-up
     input          tdi, // The JTAG TDI is input, need to be pull-up
     output         tdo, // The JTAG TDO is output 
 
-    input   [31:0] gpio_in,
-    output  [31:0] gpio_out,
+    input   [31:0] gpio_in, //gpio=general use pins 
+    output  [31:0] gpio_out, 
 
     //QSPI DQ is bidir I/O with enable, and need pull-up enable
     input    [3:0] qspi_in,
@@ -16,7 +28,7 @@ module e203_soc_demo (
     output         qspi_sck,  //QSPI SCK and CS is output without enable
     output         qspi_cs,   //QSPI SCK and CS is output without enable
 
-    input          erstn, // Erst is input need to be pull-up by default
+    input          erstn, // Erst is input need to be pull-up by default= external reset active low
 
     input          dbgmode0_n, // dbgmode are inputs need to be pull-up by default
     input          dbgmode1_n,
@@ -26,8 +38,18 @@ module e203_soc_demo (
   
     input          aon_pmu_dwakeup_n, // dwakeup is input need to be pull-up by default
     output         aon_pmu_padrst,    // PMU output is just output without enable
-    output         aon_pmu_vddpaden 
-);
+    output         aon_pmu_vddpaden, 
+
+    // =========================================================
+    // HDMI Output Signals
+    // Added to propagate video timing and pixel data generated
+    // by the HDMI peripheral up through the SoC hierarchy.
+    // These ports map directly to the FPGA physical output pins.
+    // =========================================================
+    output          V_sync,
+    output          H_sync,
+    output  [23:0]  hdmi_data_out
+    );
 
     wire hfextclk;  // This clock should comes from the crystal pad generated high speed clock (16MHz)
     wire lfextclk;  // This clock should comes from the crystal pad generated low speed clock (32.768KHz)
@@ -51,6 +73,11 @@ module e203_soc_demo (
     assign reset_n = rstdly[15];
 
 e203_soc_top e203_soc_ins (
+    // HDMI signal connections - propagated from lower hierarchy
+    .V_sync        (V_sync),
+    .H_sync        (H_sync),
+    .hdmi_data_out (hdmi_data_out),
+
     // This clock should comes from the crystal pad generated high speed clock (16MHz)
     .hfextclk   (hfextclk),
     // The signal to enable the crystal pad generated clock
