@@ -1,46 +1,41 @@
-/**
-*/
 
-//=====================================================================
-//
-// Designer   : Jiang Lei
-//
 // Description:
 //  Example for an e203 icb peripheral
-//
+// This module facilites communication and data exchange
 // ====================================================================
 
 module my_periph_example(
     input                   clk,
-    input                   rst_n,
+    input                   rst_n, //active-low reset signal
 
-    input                   i_icb_cmd_valid,
-    output                  i_icb_cmd_ready,
-    input  [32-1:0]         i_icb_cmd_addr, 
-    input                   i_icb_cmd_read, 
-    input  [32-1:0]         i_icb_cmd_wdata,
+//cmd
+    input                   i_icb_cmd_valid, // valid comand being sent to module through ICB bus
+    output                  i_icb_cmd_ready, // module ready for new command
+    input  [32-1:0]         i_icb_cmd_addr, //location where the comand should be applied(within the module's memory)
+    input                   i_icb_cmd_read, // read or write operation
+    input  [32-1:0]         i_icb_cmd_wdata,// if ~read this is the write data
 
-    output                  i_icb_rsp_valid,
-    input                   i_icb_rsp_ready,
-    output [32-1:0]         i_icb_rsp_rdata,
+    output                  i_icb_rsp_valid, //module has valid response
+    input                   i_icb_rsp_ready, // 
+    output [32-1:0]         i_icb_rsp_rdata, //data response (for ex to a read op)
 
-    output                  io_interrupts_0_0,                
-    output                  io_pad_out
+    output                  io_interrupts_0_0, //generates interrupts(it asks attention to processor)                
+    output                  io_pad_out //connects the module's internal registers with external I/O pads
 );
 
     //define a 32-bit register for operating your module
-    reg [31:0] io_value_reg;
+    reg [31:0] io_value_reg; //reg for storing data inside module
 
-    reg [31:0] icb_data_out;
-    reg        icb_rsp_valid;
+    reg [31:0] icb_data_out; // data to be sent to icb bus
+    reg        icb_rsp_valid;// tell if data_out is valid
 
     wire reset;
     wire clock;
     //read enable signal for register reading, this signal assert when proper address issued.
-    wire io_value_reg_rd_en;
+    wire io_value_reg_rd_en; //read enable
 
     //write enable signal for register writting, this signal assert when proper address issued.
-    wire io_value_reg_wr_en;
+    wire io_value_reg_wr_en; // write enable
 
 
     assign reset = ~rst_n;
