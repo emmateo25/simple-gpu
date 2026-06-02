@@ -59,7 +59,7 @@ module my_periph_example(
 
     always @(posedge clock or posedge reset) begin
         if (reset) begin
-            io_value_reg <= 32'h12345678;
+            io_value_reg <= 32'd0;
             icb_rsp_valid <= 1'b0;
         end 
         else begin

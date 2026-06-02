@@ -74,6 +74,7 @@ target/
 # ------------------------------
 # Waveform files
 *.vcd
+*.vvp
 *.fst
 *.vpd
 *.fsdb
