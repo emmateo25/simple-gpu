@@ -20,7 +20,7 @@ module my_periph_example(
     output [32-1:0]         i_icb_rsp_rdata, //data response (for ex to a read op)
 
     output                  io_interrupts_0_0, //generates interrupts(it asks attention to processor)                
-    output                  io_pad_out //connects the module's internal registers with external I/O pads
+    output [32-1:0]         io_pad_out //connects the module's internal registers with external I/O pads
 );
 
     //define a 32-bit register for operating your module
@@ -54,7 +54,7 @@ module my_periph_example(
     assign i_icb_rsp_rdata = icb_data_out;
 
     //connect io pad to register
-    assign io_pad_out = io_value_reg[0];
+    assign io_pad_out = io_value_reg;
 
 
     always @(posedge clock or posedge reset) begin

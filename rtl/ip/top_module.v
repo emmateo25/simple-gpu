@@ -3,7 +3,7 @@
 module top_module(
     input                   clk, 
     input                   rst_n, //active low reset signal
-    input   [31:0]          io_pad_out //connects the module's internal registers with external I/O pads
+    input   [31:0]          io_pad_out, //connects the module's internal registers with external I/O pads
 
     output                  V_sync,
     output                  H_sync,
@@ -18,6 +18,7 @@ wire [7:0] data_out_dpb;
 wire [15:0] w_add_ram;
 wire [7:0] data_in_ram;
 wire w_enable;
+wire de_temp;
 
 //instantiate the register splitter(split the 32-bit io_pad_out into 4 8-bit byte to store in DPB ram)
 register_splitter my_reg_splitter(
@@ -31,7 +32,7 @@ register_splitter my_reg_splitter(
 // instantiate the DPB ram,  Double Data Rate Block RAM (DPBRAM), store video data
 Gowin_DPB my_dpb(
     .douta(), // not used in this example
-    .doutb(data_out_dpb) // output data from DPB, connected to HDMI module input
+    .doutb(data_out_dpb), // output data from DPB, connected to HDMI module input
     .clka(clk),
     .ocea(1'b1), // always enable the output (Output and Chip Enable A)
     .cea(1'b1), // Chip Enable A
