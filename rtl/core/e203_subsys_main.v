@@ -25,6 +25,18 @@
 //
 // ====================================================================
 
+// =========================================================
+// MODIFICATIONS FOR HDMI INTEGRATION
+//
+// 1. Port declaration (lines 454-461): added V_sync, H_sync, and
+//    hdmi_data_out as output ports — add after the last
+//    existing output port (output hfclk), remembering to
+//    add a comma after hfclk before the new ports.
+//
+// 2. e203_subsys_perips instantiation (lines 1285-1288): connected V_sync,
+//    H_sync, and hdmi_data_out — add at the top of the
+//    port connection list of u_e203_subsys_perips.
+// =========================================================
 
 `include "e203_defines.v"
 
@@ -437,7 +449,16 @@ module e203_subsys_main(
   input  corerst, // The original async reset
   input  hfclkrst, // The original async reset
   input  hfextclk,// The original clock from crystal
-  output hfclk // The generated clock by HCLKGEN
+  output hfclk, // The generated clock by HCLKGEN
+
+  // =========================================================
+  // HDMI Output Signals
+  // Added to propagate video timing and pixel data generated
+  // by the HDMI peripheral up through the SoC hierarchy.
+  // =========================================================
+  output          V_sync,
+  output          H_sync,
+  output  [23:0]  hdmi_data_out
 
   );
 
@@ -1260,6 +1281,12 @@ e203_subsys_clint u_e203_subsys_clint(
 
 
   e203_subsys_perips u_e203_subsys_perips (
+   
+    // HDMI signal connections - propagated from lower hierarchy
+    .V_sync        (V_sync),
+    .H_sync        (H_sync),
+    .hdmi_data_out (hdmi_data_out),
+
     .pllbypass   (pllbypass   ),
     .pll_RESET   (pll_RESET   ),
     .pll_ASLEEP  (pll_ASLEEP  ),
