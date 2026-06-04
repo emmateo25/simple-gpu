@@ -33,22 +33,24 @@ initial begin
     byte_index       = 2'b00;
 end
 
-// Detect new data and latch the four bytes (MSB-first, no bit reversal)
+// Single always block: data_valid must be driven from exactly one process.
+// Priority:
+//   1. New data detected  → latch all 4 bytes, arm data_valid
+//   2. data_valid high    → output one byte per cycle, clear flag on last byte
+//   3. Idle               → deassert write_enable
 always @(posedge clk) begin
     if (data_in_32 != prev_data_in_32) begin
-        reg_array[0]    <= data_in_32[31:24];  // most-significant byte first
+        // Latch new 32-bit word (MSB-first, no bit reversal)
+        reg_array[0]    <= data_in_32[31:24];
         reg_array[1]    <= data_in_32[23:16];
         reg_array[2]    <= data_in_32[15:8];
-        reg_array[3]    <= data_in_32[7:0];    // least-significant byte last
+        reg_array[3]    <= data_in_32[7:0];
         prev_data_in_32 <= data_in_32;
         data_valid      <= 1'b1;
         byte_index      <= 2'b00;
-    end
-end
-
-// Output bytes sequentially and advance the BRAM write address
-always @(posedge clk) begin
-    if (data_valid) begin
+        write_enable    <= 1'b0;  // hold write low this cycle; output starts next cycle
+    end else if (data_valid) begin
+        // Output bytes sequentially and advance the BRAM write address
         data_out_8   <= reg_array[byte_index];
         address      <= addr_counter;
         write_enable <= 1'b1;
