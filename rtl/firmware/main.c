@@ -109,9 +109,9 @@ int main(void) {
         //======== BUS SHIPMENT TRANSACTIONS ========               
         //map current text cursor grid position to unique memory  address cell = (row * 80) + column
         uint32_t cell_address = (cursor_row * MAX_COLUMNS) + cursor_col;
-        GPU_ADDR_REG = cell_address; //alert slave where asset sits
-        GPU_DATA_REG = word0; // discharge upper horizontal row slices
-        GPU_CTRL_REG = word1; //discharge lower horizontal row slices
+        GPU_ADDR_REG = cell_address; // inform peripheral of target cell (for future addr-based hw)
+        GPU_DATA_REG = word0;        // font rows 0-3 → splitter writes BRAM bytes 0..3
+        GPU_DATA_REG = word1;        // font rows 4-7 → splitter writes BRAM bytes 4..7
 
         //======== LINE WRAPPING CONDITIONS and MANAGEMENT LOGIC ========               
         cursor_col++; //move cursor to the right for the next character

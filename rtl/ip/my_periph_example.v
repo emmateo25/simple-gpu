@@ -1,81 +1,94 @@
-
-// Description:
-//  Example for an e203 icb peripheral
-// This module facilites communication and data exchange
-// ====================================================================
+// ICB peripheral for the simple GPU.
+// Exposes three 32-bit memory-mapped registers to the RISC-V CPU:
+//
+//   Offset 0x000  GPU_ADDR_REG  – target character-cell address
+//   Offset 0x004  GPU_DATA_REG  – 32-bit font data (rows 0-3 or 4-7)
+//   Offset 0x008  GPU_CTRL_REG  – control / scroll command register
+//
+// io_pad_out is wired to GPU_DATA_REG so the register_splitter can forward
+// each write to the dual-port BRAM.  GPU_ADDR_REG and GPU_CTRL_REG are
+// available for read-back but are not yet forwarded to hardware scroll logic
+// (that is an extended-feature task).
 
 module my_periph_example(
     input                   clk,
-    input                   rst_n, //active-low reset signal
+    input                   rst_n,
 
-//cmd
-    input                   i_icb_cmd_valid, // valid comand being sent to module through ICB bus
-    output                  i_icb_cmd_ready, // module ready for new command
-    input  [32-1:0]         i_icb_cmd_addr, //location where the comand should be applied(within the module's memory)
-    input                   i_icb_cmd_read, // read or write operation
-    input  [32-1:0]         i_icb_cmd_wdata,// if ~read this is the write data
+    // ICB command channel
+    input                   i_icb_cmd_valid,
+    output                  i_icb_cmd_ready,
+    input  [31:0]           i_icb_cmd_addr,
+    input                   i_icb_cmd_read,
+    input  [31:0]           i_icb_cmd_wdata,
 
-    output                  i_icb_rsp_valid, //module has valid response
-    input                   i_icb_rsp_ready, // 
-    output [32-1:0]         i_icb_rsp_rdata, //data response (for ex to a read op)
+    // ICB response channel
+    output                  i_icb_rsp_valid,
+    input                   i_icb_rsp_ready,
+    output [31:0]           i_icb_rsp_rdata,
 
-    output                  io_interrupts_0_0, //generates interrupts(it asks attention to processor)                
-    output [32-1:0]         io_pad_out //connects the module's internal registers with external I/O pads
+    output                  io_interrupts_0_0,  // interrupt line (unused, tied low)
+    output [31:0]           io_pad_out          // GPU_DATA_REG value to register splitter
 );
 
-    //define a 32-bit register for operating your module
-    reg [31:0] io_value_reg; //reg for storing data inside module
+// ---- internal registers ----
+reg [31:0] gpu_addr_reg;   // offset 0x000
+reg [31:0] gpu_data_reg;   // offset 0x004
+reg [31:0] gpu_ctrl_reg;   // offset 0x008
 
-    reg [31:0] icb_data_out; // data to be sent to icb bus
-    reg        icb_rsp_valid;// tell if data_out is valid
+reg [31:0] icb_data_out;
+reg        icb_rsp_valid_r;
 
-    wire reset;
-    wire clock;
-    //read enable signal for register reading, this signal assert when proper address issued.
-    wire io_value_reg_rd_en; //read enable
+// ---- address decode helpers ----
+wire addr_sel_addr = i_icb_cmd_valid && (i_icb_cmd_addr[11:0] == 12'h000);
+wire addr_sel_data = i_icb_cmd_valid && (i_icb_cmd_addr[11:0] == 12'h004);
+wire addr_sel_ctrl = i_icb_cmd_valid && (i_icb_cmd_addr[11:0] == 12'h008);
 
-    //write enable signal for register writting, this signal assert when proper address issued.
-    wire io_value_reg_wr_en; // write enable
+wire wr_addr = addr_sel_addr && !i_icb_cmd_read;
+wire wr_data = addr_sel_data && !i_icb_cmd_read;
+wire wr_ctrl = addr_sel_ctrl && !i_icb_cmd_read;
 
+wire rd_addr = addr_sel_addr &&  i_icb_cmd_read;
+wire rd_data = addr_sel_data &&  i_icb_cmd_read;
+wire rd_ctrl = addr_sel_ctrl &&  i_icb_cmd_read;
 
-    assign reset = ~rst_n;
-    assign clock = clk;
-    
-    //judge if register is selected for read, 3'h4 is the offset address of the register
-    assign io_value_reg_rd_en = i_icb_cmd_valid && i_icb_cmd_read && (i_icb_cmd_addr[11:0] == 3'h4);
-    //for write
-    assign io_value_reg_wr_en = i_icb_cmd_valid && (~i_icb_cmd_read) && (i_icb_cmd_addr[11:0] == 3'h4);
+// ---- ICB handshake: no-wait-state slave ----
+// cmd_ready is always 1 so the CPU never stalls
+assign i_icb_cmd_ready = 1'b1;
 
-    //no wait state, so direct connect valid to ready signal
-    assign i_icb_cmd_ready = i_icb_cmd_valid;
+// rsp_valid is asserted one cycle after a valid command
+assign i_icb_rsp_valid = icb_rsp_valid_r;
+assign i_icb_rsp_rdata = icb_data_out;
 
-    assign i_icb_rsp_valid = i_icb_rsp_ready && icb_rsp_valid;
+// interrupt unused
+assign io_interrupts_0_0 = 1'b0;
 
-    assign i_icb_rsp_rdata = icb_data_out;
+// GPU_DATA_REG drives the register splitter
+assign io_pad_out = gpu_data_reg;
 
-    //connect io pad to register
-    assign io_pad_out = io_value_reg;
+always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+        gpu_addr_reg    <= 32'd0;
+        gpu_data_reg    <= 32'd0;
+        gpu_ctrl_reg    <= 32'd0;
+        icb_data_out    <= 32'd0;
+        icb_rsp_valid_r <= 1'b0;
+    end else begin
+        icb_rsp_valid_r <= 1'b0;  // default: deassert response valid each cycle
 
+        // --- writes ---
+        if (wr_addr) gpu_addr_reg <= i_icb_cmd_wdata;
+        if (wr_data) gpu_data_reg <= i_icb_cmd_wdata;
+        if (wr_ctrl) gpu_ctrl_reg <= i_icb_cmd_wdata;
 
-    always @(posedge clock or posedge reset) begin
-        if (reset) begin
-            io_value_reg <= 32'd0;
-            icb_rsp_valid <= 1'b0;
-        end 
-        else begin
-            if (io_value_reg_rd_en) begin
-                icb_data_out <= io_value_reg;
-                icb_rsp_valid <= 1'b1;
-            end
-            else begin
-                icb_rsp_valid <= 1'b0;
-            end
+        // --- reads ---
+        if (rd_addr) icb_data_out <= gpu_addr_reg;
+        if (rd_data) icb_data_out <= gpu_data_reg;
+        if (rd_ctrl) icb_data_out <= gpu_ctrl_reg;
 
-            if(io_value_reg_wr_en) begin
-                io_value_reg <= i_icb_cmd_wdata;
-                icb_rsp_valid <= 1'b1;
-            end
-        end
+        // assert response valid on any valid command
+        if (i_icb_cmd_valid)
+            icb_rsp_valid_r <= 1'b1;
     end
+end
 
 endmodule
