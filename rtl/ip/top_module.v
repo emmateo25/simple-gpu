@@ -61,3 +61,5 @@ hdmi my_hdmi(
     .hdmi_data(hdmi_data_out) // HDMI data output
 
 );
+
+endmodule
