@@ -439,7 +439,13 @@ module e203_subsys_top(
   output  io_pads_jtag_TRST_n_o_ds,
 
   input  test_iso_override,
-  input  test_mode 
+  input  test_mode,
+
+  // HDMI TMDS differential outputs — propagated from e203_subsys_main
+  output         hdmi_clk_p, hdmi_clk_n,
+  output         hdmi_d0_p,  hdmi_d0_n,
+  output         hdmi_d1_p,  hdmi_d1_n,
+  output         hdmi_d2_p,  hdmi_d2_n
   );
 
   wire hfclk;// The PLL generated high-speed clock 
@@ -880,10 +886,16 @@ module e203_subsys_top(
     .sysmem_icb_rsp_err    (sysmem_icb_rsp_err  ),
     .sysmem_icb_rsp_rdata  (sysmem_icb_rsp_rdata),
 
-    .test_mode     (test_mode), 
+    .test_mode     (test_mode),
     .hfclk           (hfclk   ),
     .hfclkrst        (hfclkrst),
-    .corerst       (corerst)
+    .corerst         (corerst),
+
+    // HDMI TMDS differential outputs
+    .hdmi_clk_p (hdmi_clk_p), .hdmi_clk_n (hdmi_clk_n),
+    .hdmi_d0_p  (hdmi_d0_p),  .hdmi_d0_n  (hdmi_d0_n),
+    .hdmi_d1_p  (hdmi_d1_p),  .hdmi_d1_n  (hdmi_d1_n),
+    .hdmi_d2_p  (hdmi_d2_p),  .hdmi_d2_n  (hdmi_d2_n)
   );
 
 
