@@ -32,53 +32,88 @@ module top_module(
     output wire  hdmi_d2_p,  hdmi_d2_n    // TMDS channel 2 — red
 );
 
-// ======== pixel clock PLL ========
-wire clk_pixel;       // 25.2 MHz — drives scan engine and TMDS encoders
-wire clk_tmds;        // 126 MHz  — OSER10 fast clock (5× pixel)
-wire pll_lock;
-wire pixel_rst_n = rst_n & pll_lock;  // hold display in reset until PLL locked
+// ======== pixel clock PLLs ========
+// Two separate PLLs are needed because the ratio TMDS/pixel = 5 is odd,
+// so a single PLL with CLKOUTD cannot divide to pixel clock (DYN_SDIV_SEL
+// must be an even number on GW2A-18).
+//
+// PLL 1 — pixel clock 25.2 MHz
+//   CLKOUT = 18 × (FBDIV_SEL+1) / (IDIV_SEL+1) = 18 × 7/5 = 25.2 MHz
+//   fvco   = 25.2 × ODIV_SEL(16) = 403.2 MHz  (within [400,800] MHz ✓)
+//
+// PLL 2 — TMDS bit clock 126 MHz (5× pixel clock)
+//   CLKOUT = 18 × (FBDIV_SEL+1) / (IDIV_SEL+1) = 18 × 7/1 = 126 MHz
+//   fvco   = 126 × ODIV_SEL(4)  = 504 MHz      (within [400,800] MHz ✓)
 
+wire clk_pixel;             // 25.2 MHz — scan engine + TMDS encoders
+wire clk_tmds;              // 126 MHz  — OSER10 fast clock (5× pixel)
+wire pll_pixel_lock;
+wire pll_tmds_lock;
+wire pixel_rst_n = rst_n & pll_pixel_lock & pll_tmds_lock;
+
+// ---- PLL 1: 25.2 MHz pixel clock ----
 PLL u_pll_pixel (
-    .CLKOUT  (clk_tmds),    // 126 MHz TMDS bit clock
-    .CLKOUTD (clk_pixel),   // 25.2 MHz pixel clock (= CLKOUT / DYN_SDIV_SEL)
-    .LOCK    (pll_lock),
-    .CLKOUTP (),
-    .CLKOUTD3(),
+    .CLKOUT  (clk_pixel),
+    .LOCK    (pll_pixel_lock),
+    .CLKOUTP (), .CLKOUTD (), .CLKOUTD3(),
     .RESET   (~rst_n),
-    .RESET_P (1'b0),
-    .RESET_I (1'b0),
-    .RESET_S (1'b0),
-    .CLKIN   (clk),          // 18 MHz system clock
+    .RESET_P (1'b0), .RESET_I (1'b0), .RESET_S (1'b0),
+    .CLKIN   (clk),
     .CLKFB   (1'b0),
-    .FBDSEL  (6'b0),
-    .IDSEL   (6'b0),
-    .ODSEL   (6'b0),
-    .PSDA    (4'b0),
-    .DUTYDA  (4'b0),
-    .FDLY    (4'b0)
+    .FBDSEL  (6'b0), .IDSEL (6'b0), .ODSEL (6'b0),
+    .PSDA    (4'b0), .DUTYDA(4'b0), .FDLY  (4'b0)
 );
-// 18 MHz × 7 / 1 = 126 MHz;  fvco = 504 MHz ✓
-defparam u_pll_pixel.FCLKIN          = "18";
-defparam u_pll_pixel.DYN_IDIV_SEL    = "false";
-defparam u_pll_pixel.IDIV_SEL        = 0;       // IDIV = 1
-defparam u_pll_pixel.DYN_FBDIV_SEL   = "false";
-defparam u_pll_pixel.FBDIV_SEL       = 6;       // FBDIV = 7
-defparam u_pll_pixel.DYN_ODIV_SEL    = "false";
-defparam u_pll_pixel.ODIV_SEL        = 4;       // fvco = 126×4 = 504 MHz
-defparam u_pll_pixel.DYN_SDIV_SEL    = 5;       // CLKOUTD = 126/5 = 25.2 MHz
-defparam u_pll_pixel.CLKOUTD_SRC     = "CLKOUT";
-defparam u_pll_pixel.CLKOUTD_BYPASS  = "false";
-defparam u_pll_pixel.PSDA_SEL        = "0000";
-defparam u_pll_pixel.DYN_DA_EN       = "false";
-defparam u_pll_pixel.DUTYDA_SEL      = "1000";
-defparam u_pll_pixel.CLKFB_SEL       = "internal";
-defparam u_pll_pixel.CLKOUT_FT_DIR   = 1'b1;
-defparam u_pll_pixel.CLKOUTP_FT_DIR  = 1'b1;
-defparam u_pll_pixel.CLKOUT_DLY_STEP = 0;
-defparam u_pll_pixel.CLKOUTP_DLY_STEP= 0;
-defparam u_pll_pixel.CLKOUT_BYPASS   = "false";
-defparam u_pll_pixel.CLKOUTP_BYPASS  = "false";
-defparam u_pll_pixel.DEVICE          = "GW2A-18"; // Tang Primer 20k FPGA
+defparam u_pll_pixel.FCLKIN           = "18";
+defparam u_pll_pixel.DYN_IDIV_SEL     = "false";
+defparam u_pll_pixel.IDIV_SEL         = 4;    // IDIV = 5
+defparam u_pll_pixel.DYN_FBDIV_SEL    = "false";
+defparam u_pll_pixel.FBDIV_SEL        = 6;    // FBDIV = 7
+defparam u_pll_pixel.DYN_ODIV_SEL     = "false";
+defparam u_pll_pixel.ODIV_SEL         = 16;   // fvco = 25.2×16 = 403.2 MHz
+defparam u_pll_pixel.PSDA_SEL         = "0000";
+defparam u_pll_pixel.DYN_DA_EN        = "false";
+defparam u_pll_pixel.DUTYDA_SEL       = "1000";
+defparam u_pll_pixel.CLKFB_SEL        = "internal";
+defparam u_pll_pixel.CLKOUT_BYPASS    = "false";
+defparam u_pll_pixel.CLKOUTP_BYPASS   = "false";
+defparam u_pll_pixel.CLKOUTD_BYPASS   = "false";
+defparam u_pll_pixel.CLKOUT_FT_DIR    = 1'b1;
+defparam u_pll_pixel.CLKOUTP_FT_DIR   = 1'b1;
+defparam u_pll_pixel.CLKOUT_DLY_STEP  = 0;
+defparam u_pll_pixel.CLKOUTP_DLY_STEP = 0;
+defparam u_pll_pixel.DEVICE           = "GW2A-55";
+
+// ---- PLL 2: 126 MHz TMDS bit clock ----
+PLL u_pll_tmds (
+    .CLKOUT  (clk_tmds),
+    .LOCK    (pll_tmds_lock),
+    .CLKOUTP (), .CLKOUTD (), .CLKOUTD3(),
+    .RESET   (~rst_n),
+    .RESET_P (1'b0), .RESET_I (1'b0), .RESET_S (1'b0),
+    .CLKIN   (clk),
+    .CLKFB   (1'b0),
+    .FBDSEL  (6'b0), .IDSEL (6'b0), .ODSEL (6'b0),
+    .PSDA    (4'b0), .DUTYDA(4'b0), .FDLY  (4'b0)
+);
+defparam u_pll_tmds.FCLKIN           = "18";
+defparam u_pll_tmds.DYN_IDIV_SEL     = "false";
+defparam u_pll_tmds.IDIV_SEL         = 0;    // IDIV = 1
+defparam u_pll_tmds.DYN_FBDIV_SEL    = "false";
+defparam u_pll_tmds.FBDIV_SEL        = 6;    // FBDIV = 7
+defparam u_pll_tmds.DYN_ODIV_SEL     = "false";
+defparam u_pll_tmds.ODIV_SEL         = 4;    // fvco = 126×4 = 504 MHz
+defparam u_pll_tmds.PSDA_SEL         = "0000";
+defparam u_pll_tmds.DYN_DA_EN        = "false";
+defparam u_pll_tmds.DUTYDA_SEL       = "1000";
+defparam u_pll_tmds.CLKFB_SEL        = "internal";
+defparam u_pll_tmds.CLKOUT_BYPASS    = "false";
+defparam u_pll_tmds.CLKOUTP_BYPASS   = "false";
+defparam u_pll_tmds.CLKOUTD_BYPASS   = "false";
+defparam u_pll_tmds.CLKOUT_FT_DIR    = 1'b1;
+defparam u_pll_tmds.CLKOUTP_FT_DIR   = 1'b1;
+defparam u_pll_tmds.CLKOUT_DLY_STEP  = 0;
+defparam u_pll_tmds.CLKOUTP_DLY_STEP = 0;
+defparam u_pll_tmds.DEVICE           = "GW2A-55";
 
 // ======== register splitter → BRAM write path ========
 // Runs on clk_pixel; cpu writes change io_pad_out (18 MHz domain) and are

@@ -1,0 +1,67 @@
+// Tang Primer 20K — Physical constraints for simple-gpu project
+// Top module: e203_soc_demo
+//
+// HDMI note: the design uses separate _p / _n ports for each differential pair
+// (hdmi_clk_p + hdmi_clk_n, etc.) because ELVDS_OBUF exposes both outputs.
+// Each port gets its own IO_LOC; Gowin infers the differential relationship
+// from the ELVDS_OBUF primitive in the netlist.
+// Physical pin pairs are taken from the official Tang Primer 20K vendor example.
+
+// ── System clock 27 MHz ──────────────────────────────────────
+IO_LOC "clk_in"  H11;
+IO_PORT "clk_in" IO_TYPE=LVCMOS33;
+
+// ── Active-low reset (button S1) ─────────────────────────────
+IO_LOC "erstn"  C7;
+IO_PORT "erstn" IO_TYPE=LVCMOS33;
+
+// ── UART (GPIO pins used by E203 firmware) ────────────────────
+// gpio_in[16]  = UART RX  (PC → FPGA)
+// gpio_out[17] = UART TX  (FPGA → PC)
+IO_LOC "gpio_in[16]"   T13;
+IO_PORT "gpio_in[16]"  IO_TYPE=LVCMOS33;
+
+IO_LOC "gpio_out[17]"  M11;
+IO_PORT "gpio_out[17]" IO_TYPE=LVCMOS33;
+
+// ── JTAG ─────────────────────────────────────────────────────
+IO_LOC "tdo"  C6;
+IO_LOC "tms"  B8;
+IO_LOC "tck"  A7;
+IO_LOC "tdi"  A6;
+
+IO_PORT "tdo" IO_TYPE=LVCMOS33;
+IO_PORT "tms" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+IO_PORT "tck" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+IO_PORT "tdi" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+// ── HDMI TMDS differential outputs ───────────────────────────
+// Physical pairs from vendor Tang Primer 20K example:
+//   CLK  : G16(+) H15(-)
+//   D0   : H14(+) H16(-)   ← blue channel  / carries HSYNC+VSYNC control codes
+//   D1   : J15(+) K16(-)   ← green channel
+//   D2   : K14(+) K15(-)   ← red channel
+
+// Clock channel
+IO_LOC "hdmi_clk_p"  G16;
+IO_LOC "hdmi_clk_n"  H15;
+IO_PORT "hdmi_clk_p" PULL_MODE=NONE DRIVE=3.5;
+IO_PORT "hdmi_clk_n" PULL_MODE=NONE DRIVE=3.5;
+
+// Data channel 0 — blue
+IO_LOC "hdmi_d0_p"  H14;
+IO_LOC "hdmi_d0_n"  H16;
+IO_PORT "hdmi_d0_p" PULL_MODE=NONE DRIVE=3.5;
+IO_PORT "hdmi_d0_n" PULL_MODE=NONE DRIVE=3.5;
+
+// Data channel 1 — green
+IO_LOC "hdmi_d1_p"  J15;
+IO_LOC "hdmi_d1_n"  K16;
+IO_PORT "hdmi_d1_p" PULL_MODE=NONE DRIVE=3.5;
+IO_PORT "hdmi_d1_n" PULL_MODE=NONE DRIVE=3.5;
+
+// Data channel 2 — red
+IO_LOC "hdmi_d2_p"  K14;
+IO_LOC "hdmi_d2_n"  K15;
+IO_PORT "hdmi_d2_p" PULL_MODE=NONE DRIVE=3.5;
+IO_PORT "hdmi_d2_n" PULL_MODE=NONE DRIVE=3.5;
