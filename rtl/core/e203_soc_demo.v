@@ -41,14 +41,17 @@ module e203_soc_demo (
     output         aon_pmu_vddpaden, 
 
     // =========================================================
-    // HDMI Output Signals
-    // Added to propagate video timing and pixel data generated
-    // by the HDMI peripheral up through the SoC hierarchy.
-    // These ports map directly to the FPGA physical output pins.
+    // HDMI TMDS differential output pins (Tang Primer 20k)
+    // Map these ports to the board HDMI connector in the CST file:
+    //   hdmi_clk_p/n  — clock channel
+    //   hdmi_d0_p/n   — channel 0 (blue + sync)
+    //   hdmi_d1_p/n   — channel 1 (green)
+    //   hdmi_d2_p/n   — channel 2 (red)
     // =========================================================
-    output          V_sync,
-    output          H_sync,
-    output  [23:0]  hdmi_data_out
+    output          hdmi_clk_p, hdmi_clk_n,
+    output          hdmi_d0_p,  hdmi_d0_n,
+    output          hdmi_d1_p,  hdmi_d1_n,
+    output          hdmi_d2_p,  hdmi_d2_n
     );
 
     wire hfextclk;  // This clock should comes from the crystal pad generated high speed clock (16MHz)
@@ -73,10 +76,11 @@ module e203_soc_demo (
     assign reset_n = rstdly[15];
 
 e203_soc_top e203_soc_ins (
-    // HDMI signal connections - propagated from lower hierarchy
-    .V_sync        (V_sync),
-    .H_sync        (H_sync),
-    .hdmi_data_out (hdmi_data_out),
+    // HDMI TMDS differential signals
+    .hdmi_clk_p (hdmi_clk_p), .hdmi_clk_n (hdmi_clk_n),
+    .hdmi_d0_p  (hdmi_d0_p),  .hdmi_d0_n  (hdmi_d0_n),
+    .hdmi_d1_p  (hdmi_d1_p),  .hdmi_d1_n  (hdmi_d1_n),
+    .hdmi_d2_p  (hdmi_d2_p),  .hdmi_d2_n  (hdmi_d2_n),
 
     // This clock should comes from the crystal pad generated high speed clock (16MHz)
     .hfextclk   (hfextclk),

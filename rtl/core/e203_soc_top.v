@@ -335,9 +335,11 @@ module e203_soc_top(
   // Added to propagate video timing and pixel data generated
   // by the HDMI peripheral up through the SoC hierarchy.
   // =========================================================
-  output          V_sync,
-  output          H_sync,
-  output  [23:0]  hdmi_data_out
+  // HDMI TMDS differential outputs
+  output          hdmi_clk_p, hdmi_clk_n,
+  output          hdmi_d0_p,  hdmi_d0_n,
+  output          hdmi_d1_p,  hdmi_d1_n,
+  output          hdmi_d2_p,  hdmi_d2_n
 );
 
 
@@ -355,9 +357,10 @@ module e203_soc_top(
     .core_mhartid      (1'b0),
 
     // HDMI signal connections - propagated from lower hierarchy
-    .V_sync        (V_sync),
-    .H_sync        (H_sync),
-    .hdmi_data_out (hdmi_data_out),
+    .hdmi_clk_p (hdmi_clk_p), .hdmi_clk_n (hdmi_clk_n),
+    .hdmi_d0_p  (hdmi_d0_p),  .hdmi_d0_n  (hdmi_d0_n),
+    .hdmi_d1_p  (hdmi_d1_p),  .hdmi_d1_n  (hdmi_d1_n),
+    .hdmi_d2_p  (hdmi_d2_p),  .hdmi_d2_n  (hdmi_d2_n),
   
 
 
