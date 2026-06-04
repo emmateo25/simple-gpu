@@ -116,8 +116,9 @@ wire [9:0] py      = v_count[9:0] - 10'd33;            // 0..479 (current pixel 
 
 // byte address = (char_row×80 + char_col)×8 + char_pixel_row
 // All terms fit in 16 bits: max = (59×80+79)×8+7 = 38399 < 65536
-wire [15:0] rd_addr_active =
-    ({9'd0, py[8:3]} * 16'd80 + {10'd0, px_next[9:3]}) * 16'd8 + {13'd0, py[2:0]};
+// Explicit 16-bit intermediate to avoid synthesis truncation warning EX3791.
+wire [15:0] char_addr      = {10'd0, py[8:3]} * 16'd80 + {9'd0, px_next[9:3]};
+wire [15:0] rd_addr_active = (char_addr << 3) | {13'd0, py[2:0]};
 
 assign address_read_dbp = (in_active_h_next && in_active_v) ? rd_addr_active : 16'd0;
 
