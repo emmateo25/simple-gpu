@@ -1,6 +1,6 @@
-CROSS = riscv32-unknown-elf
+#CROSS = riscv32-unknown-elf
 # If the above is not found, try: riscv64-unknown-elf
-# CROSS = riscv64-unknown-elf
+CROSS = riscv64-unknown-elf
 
 CC      = $(CROSS)-gcc
 OBJCOPY = $(CROSS)-objcopy

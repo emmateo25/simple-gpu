@@ -27,7 +27,7 @@
 //======== UART CHARACTER CAPTURE VIA POLLING ========
 uint8_t uart_receive_char(void) { //waits for a character and returns it
     // while bit 31 is 1, FIFO is empty
-    while (UART_RX_REG & 0x800000000){ //loop that checks the 31st bit for a change
+    while (UART_RX_REG & 0x80000000){ //loop that checks the 31st bit for a change
         //waits dynamically until key on the host PC is pressed
     }
     //loop breaks, the data is extracted (only the bottom 8 bits = ASCII code)

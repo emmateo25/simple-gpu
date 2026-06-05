@@ -147,10 +147,10 @@ module sirv_sim_ram_itcm
     initial begin
 `ifdef USING_IVERILOG   //simulation
         $display("loading firmware from simulator\n");
-        $readmemh("../firmware/Debug/ram.hex", mem_r);
+        $readmemh("rtl/firmware/hello_world/Debug/ram.hex", mem_r);
 `else                   //implementation
         $display("loading firmware from sythesizer\n");
-        $readmemh("../firmware/Debug/ram.hex", mem_r);
+        $readmemh("rtl/firmware/hello_world/Debug/ram.hex", mem_r);
 `endif
     end
 `endif
