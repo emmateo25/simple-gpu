@@ -8,7 +8,7 @@
 
 //======== PHYSICAL HARDWARE MEMORY-MAPPED REGISTERS ========
 //CHIEDI BASE ADDRESS a chi fa SoCTop
-#define MY_GPU_BASE_ADDR 0x20000000 // target address of the GPU on the ICB Bus 
+#define MY_GPU_BASE_ADDR 0x10014000 // target address of the GPU on the ICB Bus
 #define E203_UART_BASE 0x1001300 // base address of the E203-s build-in UART
 
 /*breakdown pointer interface (from right to left)    
