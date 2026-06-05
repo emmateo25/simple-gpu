@@ -39,7 +39,7 @@ module top_module(
 //
 // PLL 1 — pixel clock 25.2 MHz
 //   CLKOUT = 18 × (FBDIV_SEL+1) / (IDIV_SEL+1) = 18 × 7/5 = 25.2 MHz
-//   fvco   = 25.2 × ODIV_SEL(16) = 403.2 MHz  (within [400,800] MHz ✓)
+//   fvco   = 25.2 × ODIV_SEL(32) = 806.4 MHz  (within [500,1250] MHz ✓)
 //
 // PLL 2 — TMDS bit clock 126 MHz (5× pixel clock)
 //   CLKOUT = 18 × (FBDIV_SEL+1) / (IDIV_SEL+1) = 18 × 7/1 = 126 MHz
@@ -69,7 +69,7 @@ defparam u_pll_pixel.IDIV_SEL         = 4;    // IDIV = 5
 defparam u_pll_pixel.DYN_FBDIV_SEL    = "false";
 defparam u_pll_pixel.FBDIV_SEL        = 6;    // FBDIV = 7
 defparam u_pll_pixel.DYN_ODIV_SEL     = "false";
-defparam u_pll_pixel.ODIV_SEL         = 16;   // fvco = 25.2×16 = 403.2 MHz
+defparam u_pll_pixel.ODIV_SEL         = 32;   // fvco = 25.2×32 = 806.4 MHz
 defparam u_pll_pixel.PSDA_SEL         = "0000";
 defparam u_pll_pixel.DYN_DA_EN        = "false";
 defparam u_pll_pixel.DUTYDA_SEL       = "1000";
