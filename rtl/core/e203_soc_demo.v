@@ -10,13 +10,13 @@
 //    corresponding ports of the e203_soc_top instance below.
 // =========================================================
 module e203_soc_demo (
-    input          clk_in, //50MHz clock input 
+    input          clk_in, //50MHz clock input
 
     //tck=test clock, tms=test mode select, tdi=test data in, tdo=test data out
-    input          tck, // The JTAG TCK is input, need to be pull-up 
+    input          tck, // The JTAG TCK is input, need to be pull-up
     input          tms, // The JTAG TMS is input, need to be pull-up
     input          tdi, // The JTAG TDI is input, need to be pull-up
-    output         tdo, // The JTAG TDO is output 
+    output         tdo, // The JTAG TDO is output
 
     input   [31:0] gpio_in, //gpio=general use pins 
     output  [31:0] gpio_out, 

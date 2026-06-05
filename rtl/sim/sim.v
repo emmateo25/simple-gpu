@@ -97,9 +97,6 @@ end
 
 // Instantiating the e203_soc_demo module
 e203_soc_demo uut (
-    .V_sync (),
-    .H_sync (),
-    .hdmi_data_out (),
     .clk_in (clk),
     .tck (),
     .tms (),
