@@ -56,9 +56,9 @@
 
 /////////////////////////////////////////////////////////////////
 `define E203_CFG_HAS_DTCM
-    // 16KB have address 14 wide
-    //   The depth is 16*1024*8/32=4096
-`define E203_CFG_DTCM_ADDR_WIDTH 14
+    // 8KB have address 13 wide
+    //   The depth is 8*1024*8/32=2048
+`define E203_CFG_DTCM_ADDR_WIDTH 13
 
     // 256KB have address 18 wide
     //   The depth is 256*1024*8/32=65536
