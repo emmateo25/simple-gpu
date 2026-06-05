@@ -24,6 +24,7 @@ module top_module(
     input        clk,           // system clock  (18 MHz from e203 PLL)
     input        rst_n,         // active-low reset
     input [31:0] io_pad_out,    // GPU_DATA_REG value from my_periph_example
+    input        wr_data_pulse, // write strobe from my_periph_example
 
     // HDMI physical outputs (LVDS differential pairs)
     output wire  hdmi_clk_p, hdmi_clk_n,
@@ -124,6 +125,7 @@ wire        w_enable;
 
 register_splitter u_splitter (
     .clk          (clk_pixel),
+    .wr_pulse     (wr_data_pulse),
     .data_in_32   (io_pad_out),
     .data_out_8   (data_in_ram),
     .address      (w_add_ram),

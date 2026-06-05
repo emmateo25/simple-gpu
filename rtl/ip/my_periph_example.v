@@ -27,7 +27,8 @@ module my_periph_example(
     output [31:0]           i_icb_rsp_rdata,
 
     output                  io_interrupts_0_0,  // interrupt line (unused, tied low)
-    output [31:0]           io_pad_out          // GPU_DATA_REG value to register splitter
+    output [31:0]           io_pad_out,         // GPU_DATA_REG value to register splitter
+    output reg              wr_data_pulse       // 1-cycle pulse each time GPU_DATA_REG is written
 );
 
 // ---- internal registers ----
@@ -72,12 +73,17 @@ always @(posedge clk or negedge rst_n) begin
         gpu_ctrl_reg    <= 32'd0;
         icb_data_out    <= 32'd0;
         icb_rsp_valid_r <= 1'b0;
+        wr_data_pulse   <= 1'b0;
     end else begin
-        icb_rsp_valid_r <= 1'b0;  // default: deassert response valid each cycle
+        icb_rsp_valid_r <= 1'b0;
+        wr_data_pulse   <= 1'b0;  // default: deassert each cycle
 
         // --- writes ---
         if (wr_addr) gpu_addr_reg <= i_icb_cmd_wdata;
-        if (wr_data) gpu_data_reg <= i_icb_cmd_wdata;
+        if (wr_data) begin
+            gpu_data_reg  <= i_icb_cmd_wdata;
+            wr_data_pulse <= 1'b1;  // pulse every time CPU writes GPU_DATA_REG
+        end
         if (wr_ctrl) gpu_ctrl_reg <= i_icb_cmd_wdata;
 
         // --- reads ---
