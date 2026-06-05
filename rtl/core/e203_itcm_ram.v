@@ -150,7 +150,7 @@ module sirv_sim_ram_itcm
         $readmemh("../firmware/Debug/ram.hex", mem_r);
 `else                   //implementation
         $display("loading firmware from sythesizer\n");
-        $readmemh("../firmware/Debug/ram.hex", mem_r);
+        $readmemh("rtl/firmware/Debug/ram.hex", mem_r);
 `endif
     end
 `endif
