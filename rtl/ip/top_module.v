@@ -21,9 +21,11 @@
 // CPU must write character rows sequentially from BRAM address 0.
 
 module top_module(
-    input        clk,           // system clock  (18 MHz from e203 PLL)
-    input        rst_n,         // active-low reset
-    input [31:0] io_pad_out,    // GPU_DATA_REG value from my_periph_example
+    input        clk,            // system clock  (18 MHz from e203 PLL)
+    input        rst_n,          // active-low reset
+    input [31:0] io_pad_out,     // GPU_DATA_REG value from my_periph_example
+    input        write_strobe,   // 1-cycle pulse each time GPU_DATA_REG is written
+    input [15:0] bram_byte_addr, // BRAM byte address from GPU_ADDR_REG (set by firmware)
 
     // HDMI physical outputs (LVDS differential pairs)
     output wire  hdmi_clk_p, hdmi_clk_n,
@@ -125,6 +127,8 @@ wire        w_enable;
 register_splitter u_splitter (
     .clk          (clk_pixel),
     .data_in_32   (io_pad_out),
+    .write_strobe (write_strobe),
+    .addr_in      (bram_byte_addr),
     .data_out_8   (data_in_ram),
     .address      (w_add_ram),
     .write_enable (w_enable)

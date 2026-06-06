@@ -27,7 +27,7 @@
 //======== UART CHARACTER CAPTURE VIA POLLING ========
 uint8_t uart_receive_char(void) { //waits for a character and returns it
     // while bit 31 is 1, FIFO is empty
-    while (UART_RX_REG & 0x800000000){ //loop that checks the 31st bit for a change
+    while (UART_RX_REG & 0x80000000){ //loop that checks the 31st bit for a change
         //waits dynamically until key on the host PC is pressed
     }
     //loop breaks, the data is extracted (only the bottom 8 bits = ASCII code)
@@ -35,31 +35,26 @@ uint8_t uart_receive_char(void) { //waits for a character and returns it
 }
 
 //======== TERMINAL LINE CLEANING HELPER FUNCTION ========
-//wipes out specific row by overwriting ' ' (hex code 0x20) for all the 80 columns
-void clear_screen_line(uint32_t row) {  //uint32_t = index number row that will be cleared
-    for (uint32_t col = 0; col < MAX_COLUMNS; col++) { //loop through every horizontal block position of a specific row
-        uint32_t target_cell = (row * MAX_COLUMNS) + col; //transform 2D grid into 1D memory array index
-        //pack rows into 32-bit variables to ship across ICB Bus
-        uint32_t space_word0 = 0x00000000; //holds rows 0, 1, 2, 3
-        uint32_t space_word1 = 0x00000000; //holds rows 4, 5, 6, 7
+//wipes out specific row by overwriting blank glyph (all zeros) for all 80 columns
+void clear_screen_line(uint32_t row) {
+    for (uint32_t col = 0; col < MAX_COLUMNS; col++) {
+        //each character cell = 8 consecutive BRAM bytes; compute the byte address
+        uint32_t base_byte = ((row * MAX_COLUMNS) + col) * 8;
 
-        //write flat grid index into GPU Address Register, to force the physical address wire 
-        //on the ICB Bus to prepare the memory inside cell number [target_cell]
-        GPU_ADDR_REG = target_cell;
+        //write first 4 bytes (font rows 0-3): set address then send data
+        GPU_ADDR_REG = base_byte;        // splitter will write at base_byte..base_byte+3
+        GPU_DATA_REG = 0x00000000;       // blank rows 0-3
 
-        //handles the first 32-bit block (cointain rows 0-3) down the data wires
-        //when the Verilog code sees a write on this register, it catches it 
-        //and hands it over the Dual-Port RAM
-        GPU_DATA_REG = space_word0;
-
-        //handles the second 32-bit block (cointain rows 4-7) down the data wires
-        //'register_splitter' module takes these bytes and overwrites the 
-        //8x8 font grid area inside the video memory for this block
-        GPU_DATA_REG = space_word1;
+        //write second 4 bytes (font rows 4-7): advance address then send data
+        GPU_ADDR_REG = base_byte + 4;    // splitter will write at base_byte+4..base_byte+7
+        GPU_DATA_REG = 0x00000000;       // blank rows 4-7
     }
 }
 
 int main(void) {
+    //======== LOWERCASE FONT INITIALIZATION ========
+    init_lowercase_font_fallback(); //copies A-Z glyphs into a-z slots at runtime
+
     //======== CURSOR INITIALIZATION ========
     //cursor variables as flashing terminal cursor (start from top-left corner of the screen)
     uint32_t cursor_col = 0;
@@ -106,12 +101,15 @@ int main(void) {
                         ((uint32_t)font8x8_basic[incoming_ascii][6] << 8)  |
                         ((uint32_t)font8x8_basic[incoming_ascii][7]);
 
-        //======== BUS SHIPMENT TRANSACTIONS ========               
-        //map current text cursor grid position to unique memory  address cell = (row * 80) + column
-        uint32_t cell_address = (cursor_row * MAX_COLUMNS) + cursor_col;
-        GPU_ADDR_REG = cell_address; // inform peripheral of target cell (for future addr-based hw)
+        //======== BUS SHIPMENT TRANSACTIONS ========
+        //compute BRAM byte address: each cell = 8 bytes, byte 0 = (row*80+col)*8
+        uint32_t base_byte = ((cursor_row * MAX_COLUMNS) + cursor_col) * 8;
+
+        GPU_ADDR_REG = base_byte;    // splitter loads this as start address for word0
         GPU_DATA_REG = word0;        // font rows 0-3 → splitter writes BRAM bytes 0..3
-        GPU_DATA_REG = word1;        // font rows 4-7 → splitter writes BRAM bytes 4..7
+
+        GPU_ADDR_REG = base_byte + 4; // advance address for word1
+        GPU_DATA_REG = word1;         // font rows 4-7 → splitter writes BRAM bytes 4..7
 
         //======== LINE WRAPPING CONDITIONS and MANAGEMENT LOGIC ========               
         cursor_col++; //move cursor to the right for the next character

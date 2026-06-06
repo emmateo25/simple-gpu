@@ -2595,6 +2595,8 @@ sirv_uart_top u_sirv_uart0_top (
 );
 
 wire [31:0] my_io_pad_out;
+wire        my_io_data_strobe;
+wire [15:0] my_io_bram_addr;
 
   // my peripheral example
   my_periph_example u_my_periph_top(
@@ -2608,10 +2610,12 @@ wire [31:0] my_io_pad_out;
 
       .i_icb_rsp_valid (my_periph_icb_rsp_valid),
       .i_icb_rsp_ready (my_periph_icb_rsp_ready),
-      .i_icb_rsp_rdata (my_periph_icb_rsp_rdata), 
+      .i_icb_rsp_rdata (my_periph_icb_rsp_rdata),
 
-      .io_interrupts_0_0 (my_irq),                
-      .io_pad_out       (my_io_pad_out)
+      .io_interrupts_0_0 (my_irq),
+      .io_pad_out        (my_io_pad_out),
+      .io_data_strobe    (my_io_data_strobe),
+      .io_bram_addr      (my_io_bram_addr)
   );
 
   // =========================================================
@@ -2620,9 +2624,11 @@ wire [31:0] my_io_pad_out;
   // which generates V_sync, H_sync, and hdmi_data_out.
   // =========================================================
   top_module my_top(
-    .clk        (clk),
-    .rst_n      (rst_n),
-    .io_pad_out (my_io_pad_out),
+    .clk             (clk),
+    .rst_n           (rst_n),
+    .io_pad_out      (my_io_pad_out),
+    .write_strobe    (my_io_data_strobe),
+    .bram_byte_addr  (my_io_bram_addr),
     .hdmi_clk_p (hdmi_clk_p), .hdmi_clk_n (hdmi_clk_n),
     .hdmi_d0_p  (hdmi_d0_p),  .hdmi_d0_n  (hdmi_d0_n),
     .hdmi_d1_p  (hdmi_d1_p),  .hdmi_d1_n  (hdmi_d1_n),
