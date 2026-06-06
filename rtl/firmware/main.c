@@ -7,22 +7,51 @@
 #define MAX_ROWS 60 //vertical grid blocks: 480 / 8
 
 //======== PHYSICAL HARDWARE MEMORY-MAPPED REGISTERS ========
-//CHIEDI BASE ADDRESS a chi fa SoCTop
-#define MY_GPU_BASE_ADDR 0x20000000 // target address of the GPU on the ICB Bus 
-#define E203_UART_BASE 0x1001300 // base address of the E203-s build-in UART
+// Addresses from ICB bus matrix in e203_subsys_perips.v:
+//   o4 = UART0    → 0x10013000
+//   o5 = GPU      → 0x10014000
+//   o3 = GPIO     → 0x10012000
+#define MY_GPU_BASE_ADDR  0x10014000  // GPU peripheral (o5 slot)
+#define E203_UART_BASE    0x10013000  // UART0 (o4 slot)
+#define E203_GPIO_BASE    0x10012000  // GPIO (o3 slot)
 
-/*breakdown pointer interface (from right to left)    
+/*breakdown pointer interface (from right to left)
     base + offset: calculates the exact physical address destination
     (uint32_t*): treat the number as a 32-bit address pointer
     volatile: forces CPU to execute bus transfer
-    "*" deferences the pointer, turning it into an assignable register variable 
+    "*" deferences the pointer, turning it into an assignable register variable
 */
-#define GPU_ADDR_REG (*(volatile uint32_t*)(MY_GPU_BASE_ADDR + 0x000))  //target cell address
-#define GPU_DATA_REG (*(volatile uint32_t*)(MY_GPU_BASE_ADDR + 0x004))  //data write channel
-#define GPU_CTRL_REG (*(volatile uint32_t*)(MY_GPU_BASE_ADDR + 0x008))  //control/scroll port
+#define GPU_ADDR_REG  (*(volatile uint32_t*)(MY_GPU_BASE_ADDR + 0x000))  // target BRAM byte address
+#define GPU_DATA_REG  (*(volatile uint32_t*)(MY_GPU_BASE_ADDR + 0x004))  // data write channel
+#define GPU_CTRL_REG  (*(volatile uint32_t*)(MY_GPU_BASE_ADDR + 0x008))  // control/scroll port
 
-#define UART_RX_REG (*(volatile uint32_t*)(E203_UART_BASE + 0x04)) //RX data register
+// SiFive UART0 registers
+#define UART_TXDATA   (*(volatile uint32_t*)(E203_UART_BASE + 0x00))  // TX data (bit 31 = full)
+#define UART_RX_REG   (*(volatile uint32_t*)(E203_UART_BASE + 0x04))  // RX data (bit 31 = empty)
+#define UART_TXCTRL   (*(volatile uint32_t*)(E203_UART_BASE + 0x08))  // TX control (bit 0 = txen)
+#define UART_RXCTRL   (*(volatile uint32_t*)(E203_UART_BASE + 0x0C))  // RX control (bit 0 = rxen)
+#define UART_DIV      (*(volatile uint32_t*)(E203_UART_BASE + 0x18))  // baud divider
 
+// GPIO IOF registers (for UART pin mux)
+#define GPIO_IOF_EN   (*(volatile uint32_t*)(E203_GPIO_BASE + 0x38))  // IOF enable
+#define GPIO_IOF_SEL  (*(volatile uint32_t*)(E203_GPIO_BASE + 0x3C))  // IOF select (0=IOF0)
+
+
+//======== UART INITIALIZATION ========
+// Must be called before any UART use.
+// Configures GPIO IOF, baud rate, and enables TX/RX.
+void uart_init(void) {
+    // GPIO[16]=RX and GPIO[17]=TX must be routed through IOF0 (UART function)
+    GPIO_IOF_SEL &= ~((1u << 16) | (1u << 17)); // select IOF0 (UART) for pins 16,17
+    GPIO_IOF_EN  |=  ((1u << 16) | (1u << 17)); // enable IOF mux for pins 16,17
+
+    // Baud rate: 18 MHz / (155+1) = 115,385 Hz ≈ 115,200 baud
+    UART_DIV = 155;
+
+    // Enable TX and RX
+    UART_TXCTRL = 0x1; // txen = 1
+    UART_RXCTRL = 0x1; // rxen = 1
+}
 
 //======== UART CHARACTER CAPTURE VIA POLLING ========
 uint8_t uart_receive_char(void) { //waits for a character and returns it
@@ -52,7 +81,8 @@ void clear_screen_line(uint32_t row) {
 }
 
 int main(void) {
-    //======== LOWERCASE FONT INITIALIZATION ========
+    //======== HARDWARE INITIALIZATION ========
+    uart_init();                    // configure GPIO IOF, baud rate, enable UART
     init_lowercase_font_fallback(); //copies A-Z glyphs into a-z slots at runtime
 
     //======== CURSOR INITIALIZATION ========
