@@ -145,13 +145,9 @@ module sirv_sim_ram_itcm
 
 `ifdef E203_LOAD_PROGRAM
     initial begin
-`ifdef USING_IVERILOG   //simulation
-        $display("loading firmware from simulator\n");
-        $readmemh("../firmware/hello_world/Debug/ram.hex", mem_r);
-`else                   //implementation
-        $display("loading firmware from sythesizer\n");
-        $readmemh("../firmware/hello_world/Debug/ram.hex", mem_r);
-`endif
+        // Path is relative to the Gowin EDA project root (simple-gpu/).
+        // Run `make` in rtl/firmware/ first to generate this file.
+        $readmemh("rtl/firmware/hello_world/Debug/ram.hex", mem_r);
     end
 `endif
 
