@@ -81,7 +81,7 @@ defparam u_pll_pixel.CLKOUT_FT_DIR    = 1'b1;
 defparam u_pll_pixel.CLKOUTP_FT_DIR   = 1'b1;
 defparam u_pll_pixel.CLKOUT_DLY_STEP  = 0;
 defparam u_pll_pixel.CLKOUTP_DLY_STEP = 0;
-defparam u_pll_pixel.DEVICE           = "GW2A-55";
+defparam u_pll_pixel.DEVICE           = "GW2A-18";
 
 // ---- PLL 2: 126 MHz TMDS bit clock ----
 PLL u_pll_tmds (
@@ -113,7 +113,7 @@ defparam u_pll_tmds.CLKOUT_FT_DIR    = 1'b1;
 defparam u_pll_tmds.CLKOUTP_FT_DIR   = 1'b1;
 defparam u_pll_tmds.CLKOUT_DLY_STEP  = 0;
 defparam u_pll_tmds.CLKOUTP_DLY_STEP = 0;
-defparam u_pll_tmds.DEVICE           = "GW2A-55";
+defparam u_pll_tmds.DEVICE           = "GW2A-18";
 
 // ======== register splitter → BRAM write path ========
 // Runs on clk_pixel; cpu writes change io_pad_out (18 MHz domain) and are
