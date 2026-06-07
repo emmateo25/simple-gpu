@@ -22,7 +22,7 @@ CFLAGS  := -march=rv32imc -mabi=ilp32 -O0 -nostdlib \
            -ffunction-sections -fdata-sections \
            -Wall -Wno-unused-function
 
-LDFLAGS := -T link.ld -Wl,--gc-sections -Wl,--Map=$(OUT)/firmware.map
+LDFLAGS := -T link.ld -Wl,--gc-sections
 
 OUT     := hello_world/Debug
 ELF     := $(OUT)/firmware.elf
