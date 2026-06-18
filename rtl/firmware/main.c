@@ -80,6 +80,42 @@ void clear_screen_line(uint32_t row) {
     }
 }
 
+//======== STAGE 2 HELPERS ========
+
+static void write_char_to_bram(uint8_t ch, uint32_t row, uint32_t col) {
+    uint32_t word0 = ((uint32_t)font8x8_basic[ch][0] << 24) |
+                     ((uint32_t)font8x8_basic[ch][1] << 16) |
+                     ((uint32_t)font8x8_basic[ch][2] << 8)  |
+                     ((uint32_t)font8x8_basic[ch][3]);
+    uint32_t word1 = ((uint32_t)font8x8_basic[ch][4] << 24) |
+                     ((uint32_t)font8x8_basic[ch][5] << 16) |
+                     ((uint32_t)font8x8_basic[ch][6] << 8)  |
+                     ((uint32_t)font8x8_basic[ch][7]);
+    uint32_t base_byte = ((row * MAX_COLUMNS) + col) * 8;
+    GPU_ADDR_REG = base_byte;
+    GPU_DATA_REG = word0;
+    GPU_ADDR_REG = base_byte + 4;
+    GPU_DATA_REG = word1;
+}
+
+static void write_string_to_bram(const char *str, uint32_t row, uint32_t col) {
+    for (uint32_t i = 0; str[i] != '\0'; i++) {
+        write_char_to_bram((uint8_t)str[i], row, col);
+        col++;
+        if (col >= MAX_COLUMNS) { col = 0; row++; }
+    }
+}
+
+// Busy-wait using RISC-V mcycle CSR (counts at the CPU/system clock rate).
+// At 18 MHz: pass 180 000 000 for a 10-second hold.
+static void delay_mcycles(uint32_t cycles) {
+    uint32_t start, now;
+    asm volatile("csrr %0, mcycle" : "=r"(start));
+    do {
+        asm volatile("csrr %0, mcycle" : "=r"(now));
+    } while ((uint32_t)(now - start) < cycles);
+}
+
 int main(void) {
     //======== HARDWARE INITIALIZATION ========
     uart_init();                    // configure GPIO IOF, baud rate, enable UART
@@ -93,6 +129,20 @@ int main(void) {
     //======== POWER-UP SCREEN CLEARING ========
     //clear display grid area with clear_screen_line function
     //to prevent glitch text or random memory noise when the FPGA powers up
+    for (uint32_t r = 0; r < MAX_ROWS; r++) {
+        clear_screen_line(r);
+    }
+
+    //======== STAGE 2: STATIC TEXT DISPLAY ========
+    // Write "SIMPLE GPU" at top-left (row 0, col 0).
+    // Lowercase is remapped to uppercase by init_lowercase_font_fallback,
+    // so the string renders as SIMPLE GPU either way.
+    write_string_to_bram("SIMPLE GPU", 0, 0);
+
+    // Hold Stage 2 for 10 seconds (18 MHz × 10 = 180 000 000 mcycle ticks).
+    delay_mcycles(180000000u);
+
+    // Clear the screen before entering the interactive terminal.
     for (uint32_t r = 0; r < MAX_ROWS; r++) {
         clear_screen_line(r);
     }
